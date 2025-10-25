@@ -14,13 +14,13 @@ on:
 
 env:
   AWS_ACCOUNT_ID: 648378716943
-  APP_NAME: notes-app
+  APP_NAME: notes-app-serverless
   ARTEFACTS_BUCKET: artefacts-648378716943
-  CODE_DEPLOY_APP_NAME: notes-app-frontend
-  CODE_DEPLOY_DEPLOYMENT_GROUP: notes-app-frontend-bluegreen-dg
+  CODE_DEPLOY_APP_NAME: notes-app-serverless-frontend
+  CODE_DEPLOY_DEPLOYMENT_GROUP: notes-app-serverless-frontend-bluegreen-dg
   COMMIT_HASH: ${{ github.sha }}
-  IMAGE_NAME: notes-app-frontend
-  TASK_DEFINITION_NAME: notes-app-frontend
+  IMAGE_NAME: notes-app-serverless-frontend
+  TASK_DEFINITION_NAME: notes-app-serverless-frontend
 
 jobs:
   check-build:
