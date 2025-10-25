@@ -6,7 +6,6 @@ on:
 jobs:
   teardown-auth0-config:
     name: Teardown config Auth0
-    needs: [teardown-aws-resources]
     runs-on: ubuntu-latest
     defaults:
       run:
