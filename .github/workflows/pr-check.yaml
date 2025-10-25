@@ -1,0 +1,94 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+jobs:
+  detect-changes:
+    name: Detect changed folders
+    runs-on: ubuntu-latest
+    outputs:
+      frontend_changed: ${{ steps.set-outputs.outputs.frontend_changed }}
+      infra_changed: ${{ steps.set-outputs.outputs.infra_changed }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for accurate diff
+
+      - name: Determine changes
+        id: set-outputs
+        run: |
+          echo "Checking for changes against main branch..."
+          # Get list of changed files between PR HEAD and main
+          CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
+
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          # Check if frontend folder changed
+          if echo "$CHANGED_FILES" | grep -q '^frontend/'; then
+            echo "frontend_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "frontend_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Check if infra folder changed
+          if echo "$CHANGED_FILES" | grep -q '^infra/'; then
+            echo "infra_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "infra_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+  frontend-build:
+    name: Frontend - build
+    runs-on: ubuntu-latest
+    needs: [ detect-changes ]
+    if: needs.detect-changes.outputs.frontend_changed == 'true'
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check lint
+        run: npm run lint
+
+      - name: Run build
+        run: npm run build
+
+  terraform-check:
+    name: Terraform check
+    runs-on: ubuntu-latest
+    needs: [ detect-changes ]
+    if: needs.detect-changes.outputs.infra_changed == 'true'
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+      
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Check Terraform formatting
+        run: |
+          terraform fmt -recursive -check || (echo "Terraform files are not properly formatted." && exit 1)

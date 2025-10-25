@@ -1,0 +1,14 @@
+Deleting secets through terraform doesn't immediately delete it, use the below command to delete immediately
+
+aws secretsmanager delete-secret \
+  --secret-id app/notes-app/database \
+  --force-delete-without-recovery
+
+docker compose build --no-cache
+docker compose up --force-recreate
+docker compose down --rmi all --volumes --remove-orphans
+
+docker compose build --no-cache: Explicitly rebuilds all images defined in your docker-compose.yml without using the cache.
+docker compose up: Starts the services using the newly built images. You should add --force-recreate to ensure the containers are restarted with the fresh images.
+
+docker rmi -f $(docker images -aq)

@@ -1,0 +1,14 @@
+services:
+  frontend:
+    build:
+      context: frontend
+      target: dev
+    ports:
+      - "5173:5173"
+    expose:
+      - "5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    env_file:
+      - ./frontend/.env
