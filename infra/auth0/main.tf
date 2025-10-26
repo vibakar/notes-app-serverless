@@ -1,6 +1,6 @@
 resource "auth0_client" "notes_app" {
-  name                = "Notes App"
-  description         = "Application for the Notes App"
+  name                = "Notes App Serverless"
+  description         = "Application for the Notes App Serverless"
   app_type            = "spa"
   callbacks           = local.auth0_config.callbacks
   allowed_logout_urls = local.auth0_config.allowed_logout_urls
