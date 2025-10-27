@@ -22,3 +22,8 @@ variable "frontend_image" {
   type        = string
   default     = "vibakar/notes-app-frontend:latest"
 }
+
+variable "lambda_s3_key" {
+  description = "S3 key for the lamba zip file"
+  type        = string
+}

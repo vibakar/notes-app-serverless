@@ -3,6 +3,9 @@ name: Infra Setup
 on:
   workflow_dispatch: {}
 
+env:
+  ARTEFACTS_BUCKET_NAME: notes-app-serverless-artefacts-648378716943
+
 jobs:
 
   bootstrap:
@@ -21,7 +24,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION || 'eu-west-2' }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -36,7 +39,7 @@ jobs:
 
       - name: Terraform Apply (auto-approve)
         run: terraform apply -auto-approve
-
+  
   config-auth0:
     name: Config Auth0
     needs: [bootstrap]
@@ -54,7 +57,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION || 'eu-west-2' }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -78,9 +81,47 @@ jobs:
       - name: Terraform Apply (auto-approve)
         run: terraform apply -auto-approve
 
+  build-and-publish-artefacts:
+    name: Build and Publish Artefacts
+    needs: [bootstrap]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      
+      - name: Install Dependencies
+        run: npm install --omit=dev
+
+      - name: Package Backend
+        run: |
+          DATE=$(date +%Y%m%d)
+          SHA=$(git rev-parse --short HEAD)
+          ZIP_FILE="backend-${DATE}-${SHA}.zip"
+          cd ${{ env.BACKEND_DIR }}
+          zip -r ../$ZIP_FILE . -x "node_modules/aws-sdk/*"
+          echo "ZIP_FILE_NAME=$ZIP_FILE" >> $GITHUB_ENV
+          echo "zip_file_name=$ZIP_FILE" >> $GITHUB_OUTPUT
+
+      - name: Upload artefact to S3
+        run: |
+          echo "Uploading $ZIP_FILE_NAME to s3://${{ env.ARTEFACTS_BUCKET_NAME }}/lambda/"
+          aws s3 cp $ZIP_FILE_NAME s3://${{ env.ARTEFACTS_BUCKET_NAME }}/lambda/$ZIP_FILE_NAME
+          echo "s3_key=lambda/$ZIP_FILE_NAME" >> $GITHUB_OUTPUT
+
   deploy-aws-resources:
     name: Deploy AWS Resources
-    needs: [config-auth0]
+    needs: [config-auth0, build-and-publish-artefacts]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -95,7 +136,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION || 'eu-west-2' }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -109,4 +150,4 @@ jobs:
         run: terraform plan
 
       - name: Terraform Apply (auto-approve)
-        run: terraform apply -auto-approve
+        run: terraform apply -var="lambda_s3_key=lambda/${{ needs.build-and-publish-artefacts.outputs.zip_file_name }}" -auto-approve

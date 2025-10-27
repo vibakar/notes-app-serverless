@@ -6,3 +6,8 @@ output "docker_secret" {
   }
   sensitive = true
 }
+
+output "artefact_bucket" {
+  description = "Bucket for stroing artefacts"
+  value       = aws_s3_bucket.artefact_bucket.bucket
+}
