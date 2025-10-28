@@ -1,6 +1,6 @@
 locals {
   auth0_config = {
-    domain     = "https://login.notes-app-serverless.vibakar.com"
+    domain     = "https://login.${var.app_name}.vibakar.com"
     identifier = "https://notes-api-serverless.com"
     callbacks = [
       "http://localhost",
