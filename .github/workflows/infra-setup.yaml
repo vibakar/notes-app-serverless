@@ -88,7 +88,8 @@ jobs:
     defaults:
       run:
         working-directory: backend
-
+    outputs:
+      zip_file_name: ${{ steps.package.outputs.zip_file_name }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -104,6 +105,7 @@ jobs:
         run: npm install --omit=dev
 
       - name: Package Backend
+        id: package
         run: |
           DATE=$(date +%Y%m%d)
           SHA=$(git rev-parse --short HEAD)
