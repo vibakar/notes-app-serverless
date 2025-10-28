@@ -47,7 +47,7 @@ jobs:
           echo "s3_key=lambda/$ZIP_FILE_NAME" >> $GITHUB_OUTPUT
 
   teardown-aws-resources:
-    name: Deploy AWS Resources
+    name: Teardown AWS Resources
     needs: [build-and-publish-artefacts]
     runs-on: ubuntu-latest
     defaults:
