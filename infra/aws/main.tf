@@ -21,7 +21,7 @@ resource "aws_ecs_task_definition" "frontend" {
       containerPort = 80
     }]
     environment = [
-      { name = "VITE_API_BASE_URL", value = "https://${local.backend_domain_name}" },
+      { name = "VITE_API_BASE_URL", value = "" },
       { name = "VITE_AUTH0_REDIRECT_URI", value = "https://${local.frontend_domain_name}" }
     ]
     secrets = [

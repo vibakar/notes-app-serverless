@@ -1,6 +1,6 @@
 resource "aws_acm_certificate" "this" {
   domain_name               = local.acm_certificate_domain_name
-  subject_alternative_names = [local.frontend_domain_name, local.backend_domain_name]
+  subject_alternative_names = [local.frontend_domain_name]
   validation_method         = "DNS"
 
   lifecycle {
