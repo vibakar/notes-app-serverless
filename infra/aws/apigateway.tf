@@ -28,7 +28,7 @@ resource "aws_apigatewayv2_route" "routes" {
 
   api_id             = aws_apigatewayv2_api.notes_api.id
   route_key          = "${each.value.method} ${each.value.route}"
-  target             = "integrations/${aws_apigatewayv2_integration.lambda_integration[each.value.lambda].id}"
+  target             = format("integrations/%s", aws_apigatewayv2_integration.lambda_integration[each.key].id)
   authorization_type = "JWT"
   authorizer_id      = aws_apigatewayv2_authorizer.auth0_jwt.id
 }
