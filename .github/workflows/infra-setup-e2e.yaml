@@ -148,6 +148,39 @@ jobs:
         run: terraform init
 
       - name: Terraform Plan
+        run: terraform plan
+
+      - name: Terraform Apply (auto-approve)
+        run: terraform apply -auto-approve
+
+  deploy-application-lambda:
+    name: Deploy Application Lambda
+    needs: [build-and-publish-artefacts, deploy-aws-resources]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/application
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
         run: terraform plan -var="lambda_s3_key=lambda/${{ needs.build-and-publish-artefacts.outputs.zip_file_name }}" 
 
       - name: Terraform Apply (auto-approve)

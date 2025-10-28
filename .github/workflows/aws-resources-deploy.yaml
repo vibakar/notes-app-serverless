@@ -1,4 +1,4 @@
-name: Teardown AWS Resources
+name: Deploy AWS Resources
 
 on:
   workflow_dispatch: {}
@@ -8,8 +8,8 @@ env:
 
 jobs:
 
-  teardown-aws-resources:
-    name: Teardown AWS Resources
+  deploy-aws-resources:
+    name: Deploy AWS Resources
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -38,4 +38,4 @@ jobs:
         run: terraform plan
 
       - name: Terraform Apply (auto-approve)
-        run: terraform destroy -auto-approve
+        run: terraform apply -auto-approve

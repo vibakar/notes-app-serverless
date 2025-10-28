@@ -15,7 +15,7 @@ on:
 env:
   AWS_ACCOUNT_ID: 648378716943
   APP_NAME: notes-app-serverless
-  ARTEFACTS_BUCKET: artefacts-648378716943
+  ARTEFACTS_BUCKET: notes-app-serverless-artefacts-648378716943
   CODE_DEPLOY_APP_NAME: notes-app-serverless-frontend
   CODE_DEPLOY_DEPLOYMENT_GROUP: notes-app-serverless-frontend-bluegreen-dg
   COMMIT_HASH: ${{ github.sha }}
@@ -135,14 +135,14 @@ jobs:
       run: zip frontend-deployment-${{ github.sha }}.zip appspec.yaml
 
     - name: Upload appsepec to s3
-      run: aws s3 cp frontend-deployment-${{ github.sha }}.zip s3://${{ env.ARTEFACTS_BUCKET}}/${{ env.APP_NAME }}/frontend-deployment-${{ github.sha }}.zip
+      run: aws s3 cp frontend-deployment-${{ github.sha }}.zip s3://${{ env.ARTEFACTS_BUCKET}}/codedeploy/${{ env.APP_NAME }}/frontend-deployment-${{ github.sha }}.zip
         
     - name: Deploy to CodeDeploy
       run: |
         DEPLOYMENT_ID=$(aws deploy create-deployment \
           --application-name ${{ env.CODE_DEPLOY_APP_NAME }} \
           --deployment-group-name ${{ env.CODE_DEPLOY_DEPLOYMENT_GROUP }} \
-          --s3-location bucket=${{ env.ARTEFACTS_BUCKET }},key=${{ env.APP_NAME }}/frontend-deployment-${{ github.sha }}.zip,bundleType=zip \
+          --s3-location bucket=${{ env.ARTEFACTS_BUCKET }},key=codedeploy/${{ env.APP_NAME }}/frontend-deployment-${{ github.sha }}.zip,bundleType=zip \
           --description "Deploy from GitHub Actions" \
           --query "deploymentId" --output text)
 

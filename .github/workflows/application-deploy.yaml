@@ -1,4 +1,4 @@
-name: AWS Resources Setup
+name: Deploy Application Lambda
 
 on:
   workflow_dispatch: {}
@@ -46,13 +46,13 @@ jobs:
           aws s3 cp /tmp/$ZIP_FILE_NAME s3://${{ env.ARTEFACTS_BUCKET_NAME }}/lambda/$ZIP_FILE_NAME
           echo "s3_key=lambda/$ZIP_FILE_NAME" >> $GITHUB_OUTPUT
 
-  deploy-aws-resources:
-    name: Deploy AWS Resources
+  deploy-application-lambda:
+    name: Deploy Application Lambda
     needs: [build-and-publish-artefacts]
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: infra/aws
+        working-directory: infra/application
 
     steps:
       - name: Checkout Code
@@ -77,4 +77,4 @@ jobs:
         run: terraform plan -var="lambda_s3_key=lambda/${{ needs.build-and-publish-artefacts.outputs.zip_file_name }}" 
 
       - name: Terraform Apply (auto-approve)
-        run: terraform apply -var="lambda_s3_key=lambda/${{ needs.build-and-publish-artefacts.outputs.zip_file_name }}" -auto-approve
+        run: terraform destroy -var="lambda_s3_key=lambda/${{ needs.build-and-publish-artefacts.outputs.zip_file_name }}" -auto-approve
