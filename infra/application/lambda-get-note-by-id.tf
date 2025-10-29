@@ -3,7 +3,7 @@ resource "aws_lambda_function" "get_note_by_id_lambda" {
   role          = aws_iam_role.get_note_by_id_lambda_role.arn
   runtime       = local.lambda_config.runtime
   handler       = "backend/handlers/getNoteById.handler"
-  s3_bucket     = data.terraform_remote_state.environment.outputs.artefact_bucket
+  s3_bucket     = local.lambda_config.s3_bucket
   s3_key        = var.lambda_s3_key
 
   environment {

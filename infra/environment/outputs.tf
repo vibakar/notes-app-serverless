@@ -23,5 +23,8 @@ output "apigateway" {
 
 output "artefact_bucket" {
   description = "S3 bucket for storing artefact"
-  value = aws_s3_bucket.artefact_bucket.arn
+  value = {
+    arn = aws_s3_bucket.artefact_bucket.arn
+    name = aws_s3_bucket.artefact_bucket.id
+  }
 }

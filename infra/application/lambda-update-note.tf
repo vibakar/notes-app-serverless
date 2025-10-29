@@ -3,7 +3,7 @@ resource "aws_lambda_function" "update_note_lambda" {
   role          = aws_iam_role.update_note_lambda_role.arn
   runtime       = local.lambda_config.runtime
   handler       = "backend/handlers/updateNote.handler"
-  s3_bucket     = data.terraform_remote_state.environment.outputs.artefact_bucket
+  s3_bucket     = local.lambda_config.s3_bucket
   s3_key        = var.lambda_s3_key
 
   environment {
