@@ -3,6 +3,10 @@ name: Infra Setup E2E
 on:
   workflow_dispatch: {}
 
+permissions:
+  id-token: write   # REQUIRED for OIDC authentication
+  contents: read    # needed so checkout can read repo code
+
 env:
   ARTEFACTS_BUCKET_NAME: notes-app-serverless-artefacts-648378716943
   AWS_REGION: eu-west-2
