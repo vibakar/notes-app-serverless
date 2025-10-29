@@ -4,10 +4,9 @@ output "docker_secret" {
     arn : aws_secretsmanager_secret.docker.arn
     name : aws_secretsmanager_secret.docker.name
   }
-  sensitive = true
 }
 
 output "artefact_bucket" {
-  description = "Bucket for stroing artefacts"
+  description = "Bucket for storing artefacts"
   value       = aws_s3_bucket.artefact_bucket.bucket
 }
