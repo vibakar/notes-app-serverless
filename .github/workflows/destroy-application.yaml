@@ -76,8 +76,5 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Plan
-        run: terraform plan -var="lambda_s3_key=lambda/${{ needs.build-and-publish-artefacts.outputs.zip_file_name }}" 
-
       - name: Terraform Apply (auto-approve)
-        run: terraform apply -var="lambda_s3_key=lambda/${{ needs.build-and-publish-artefacts.outputs.zip_file_name }}" -auto-approve
+        run: terraform destroy -var="lambda_s3_key=lambda/${{ needs.build-and-publish-artefacts.outputs.zip_file_name }}" -auto-approve
