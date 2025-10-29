@@ -35,7 +35,7 @@ jobs:
           terraform_version: 1.5.7
 
       - name: Terraform Init
-        run: terraform Init
+        run: terraform init
 
       - name: Terraform Apply (auto-approve)
         run: terraform destroy -auto-approve
