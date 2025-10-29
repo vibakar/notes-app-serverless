@@ -13,7 +13,6 @@ env:
 jobs:
   config-auth0:
     name: Config Auth0
-    needs: [bootstrap]
     runs-on: ubuntu-latest
     defaults:
       run:
