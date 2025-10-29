@@ -1,20 +1,23 @@
-name: Deploy AWS Resources
+name: Destroy environment
 
 on:
   workflow_dispatch: {}
 
+permissions:
+  id-token: write   # REQUIRED for OIDC authentication
+  contents: read    # needed so checkout can read repo code
+
 env:
-  ARTEFACTS_BUCKET_NAME: notes-app-serverless-artefacts-648378716943
   AWS_REGION: eu-west-2
 
 jobs:
 
-  deploy-aws-resources:
-    name: Deploy AWS Resources
+  destroy-environment:
+    name: Destroy environemnt
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: infra/aws
+        working-directory: infra/environment
 
     steps:
       - name: Checkout Code
@@ -32,10 +35,7 @@ jobs:
           terraform_version: 1.5.7
 
       - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Plan
-        run: terraform plan
+        run: terraform Init
 
       - name: Terraform Apply (auto-approve)
-        run: terraform apply -auto-approve
+        run: terraform destroy -auto-approve

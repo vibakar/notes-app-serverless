@@ -1,6 +1,8 @@
 locals {
-  acm_certificate_domain_name = "${var.app_name}.${var.root_domain_name}"
-  backend_domain_name         = "api.${var.app_name}.${var.root_domain_name}"
+  apigateway = {
+    id : data.terraform_remote_state.environment.outputs.apigateway.id,
+    execution_arn : data.terraform_remote_state.environment.outputs.apigateway.execution_arn
+  }
   lambda_config = {
     runtime = "nodejs18.x"
   }

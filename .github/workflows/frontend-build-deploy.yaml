@@ -12,6 +12,10 @@ on:
           - 'true'
           - 'false'
 
+permissions:
+  id-token: write   # REQUIRED for OIDC authentication
+  contents: read    # needed so checkout can read repo code
+
 env:
   AWS_ACCOUNT_ID: 648378716943
   AWS_REGION: eu-west-2

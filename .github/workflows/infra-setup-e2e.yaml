@@ -83,9 +83,41 @@ jobs:
       - name: Terraform Apply (auto-approve)
         run: terraform apply -auto-approve
 
+  deploy-environment:
+    name: Deploy environment
+    needs: [config-auth0]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/environment
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ASSUME_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        run: terraform plan
+
+      - name: Terraform Apply (auto-approve)
+        run: terraform apply -auto-approve
+
   build-and-publish-artefacts:
     name: Build and Publish Artefacts
-    needs: [bootstrap]
+    needs: [deploy-environment]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -121,41 +153,9 @@ jobs:
           aws s3 cp /tmp/$ZIP_FILE_NAME s3://${{ env.ARTEFACTS_BUCKET_NAME }}/lambda/$ZIP_FILE_NAME
           echo "s3_key=lambda/$ZIP_FILE_NAME" >> $GITHUB_OUTPUT
 
-  deploy-aws-resources:
-    name: Deploy AWS Resources
-    needs: [config-auth0, build-and-publish-artefacts]
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: infra/aws
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ASSUME_ROLE }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.5.7
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Plan
-        run: terraform plan
-
-      - name: Terraform Apply (auto-approve)
-        run: terraform apply -auto-approve
-
-  deploy-application-lambda:
-    name: Deploy Application Lambda
-    needs: [build-and-publish-artefacts, deploy-aws-resources]
+  deploy-application:
+    name: Deploy Application
+    needs: [build-and-publish-artefacts]
     runs-on: ubuntu-latest
     defaults:
       run:

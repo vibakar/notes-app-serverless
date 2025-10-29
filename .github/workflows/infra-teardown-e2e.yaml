@@ -3,18 +3,87 @@ name: Infra Teardown E2E
 on:
   workflow_dispatch: {}
 
+permissions:
+  id-token: write   # REQUIRED for OIDC authentication
+  contents: read    # needed so checkout can read repo code
+
 env:
   AWS_REGION: eu-west-2
 
 jobs:
-
-  teardown-aws-resources:
-    name: Teardown aws resources
+  build-and-publish-artefacts:
+    name: Build and Publish Artefacts
     runs-on: ubuntu-latest
-
     defaults:
       run:
-        working-directory: infra/aws
+        working-directory: backend
+    outputs:
+      zip_file_name: ${{ steps.package.outputs.zip_file_name }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ASSUME_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Install Dependencies
+        run: npm install --omit=dev
+
+      - name: Package Backend
+        id: package
+        run: |
+          DATE=$(date +%Y%m%d)
+          SHA=$(git rev-parse --short HEAD)
+          ZIP_FILE="backend-${DATE}-${SHA}.zip"
+          zip -r /tmp/$ZIP_FILE . -x "node_modules/aws-sdk/*"
+          echo "ZIP_FILE_NAME=$ZIP_FILE" >> $GITHUB_ENV
+          echo "zip_file_name=$ZIP_FILE" >> $GITHUB_OUTPUT
+
+      - name: Upload artefact to S3
+        run: |
+          echo "Uploading /tmp/$ZIP_FILE_NAME to s3://${{ env.ARTEFACTS_BUCKET_NAME }}/lambda/"
+          aws s3 cp /tmp/$ZIP_FILE_NAME s3://${{ env.ARTEFACTS_BUCKET_NAME }}/lambda/$ZIP_FILE_NAME
+          echo "s3_key=lambda/$ZIP_FILE_NAME" >> $GITHUB_OUTPUT
+
+  destroy-application:
+    name: Destroy Application
+    needs: [build-and-publish-artefacts]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/application
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ASSUME_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Destroy (auto-approve)
+        run: terraform destroy -var="lambda_s3_key=lambda/${{ needs.build-and-publish-artefacts.outputs.zip_file_name }}" -auto-approve
+
+  destroy-environment:
+    name: Destroy environment
+    runs-on: ubuntu-latest
+    needs: [destroy-application]
+    defaults:
+      run:
+        working-directory: infra/environment
 
     steps:
       - name: Checkout Code
@@ -38,8 +107,8 @@ jobs:
         run: terraform destroy -auto-approve
 
   teardown-auth0-config:
-    name: Teardown config Auth0
-    needs: [teardown-aws-resources]
+    name: Teardown Auth0 config
+    needs: [destroy-environment]
     runs-on: ubuntu-latest
     defaults:
       run:

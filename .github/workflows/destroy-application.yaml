@@ -1,7 +1,11 @@
-name: Deploy Application Lambda
+name: Destroy Application
 
 on:
   workflow_dispatch: {}
+
+permissions:
+  id-token: write   # REQUIRED for OIDC authentication
+  contents: read    # needed so checkout can read repo code
 
 env:
   ARTEFACTS_BUCKET_NAME: notes-app-serverless-artefacts-648378716943
@@ -46,8 +50,8 @@ jobs:
           aws s3 cp /tmp/$ZIP_FILE_NAME s3://${{ env.ARTEFACTS_BUCKET_NAME }}/lambda/$ZIP_FILE_NAME
           echo "s3_key=lambda/$ZIP_FILE_NAME" >> $GITHUB_OUTPUT
 
-  deploy-application-lambda:
-    name: Deploy Application Lambda
+  destroy-application:
+    name: Destroy Application
     needs: [build-and-publish-artefacts]
     runs-on: ubuntu-latest
     defaults:
@@ -76,4 +80,4 @@ jobs:
         run: terraform plan -var="lambda_s3_key=lambda/${{ needs.build-and-publish-artefacts.outputs.zip_file_name }}" 
 
       - name: Terraform Apply (auto-approve)
-        run: terraform destroy -var="lambda_s3_key=lambda/${{ needs.build-and-publish-artefacts.outputs.zip_file_name }}" -auto-approve
+        run: terraform apply -var="lambda_s3_key=lambda/${{ needs.build-and-publish-artefacts.outputs.zip_file_name }}" -auto-approve

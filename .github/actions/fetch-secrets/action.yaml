@@ -2,17 +2,11 @@ name: "Fetch Secrets from AWS Secrets Manager"
 description: "Retrieve a secret JSON from AWS Secrets Manager and export its keys as env variables"
 
 inputs:
-  aws_access_key_id:
-    description: "AWS Access Key ID"
-    required: true
-  aws_secret_access_key:
-    description: "AWS Secret Access Key"
+  role-to-assume:
+    description: "AWS role to assume"
     required: true
   aws_region:
     description: "AWS Region"
-    required: true
-  secret_id:
-    description: "AWS Secrets Manager Secret ID"
     required: true
 
 runs:

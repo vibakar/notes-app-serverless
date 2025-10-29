@@ -3,7 +3,7 @@ resource "aws_lambda_function" "get_notes_lambda" {
   role          = aws_iam_role.get_notes_lambda_role.arn
   runtime       = local.lambda_config.runtime
   handler       = "backend/handlers/getNotes.handler"
-  s3_bucket     = data.terraform_remote_state.bootstrap.outputs.artefact_bucket
+  s3_bucket     = data.terraform_remote_state.environment.outputs.artefact_bucket
   s3_key        = var.lambda_s3_key
 
   environment {
@@ -14,14 +14,14 @@ resource "aws_lambda_function" "get_notes_lambda" {
 }
 
 resource "aws_apigatewayv2_integration" "get_notes_lambda_integration" {
-  api_id                 = aws_apigatewayv2_api.notes_api.id
+  api_id                 = local.apigateway.id
   integration_type       = "AWS_PROXY"
   integration_uri        = aws_lambda_function.get_notes_lambda.invoke_arn
   payload_format_version = "2.0"
 }
 
 resource "aws_apigatewayv2_route" "get_notes_lambda_get_route" {
-  api_id             = aws_apigatewayv2_api.notes_api.id
+  api_id             = local.apigateway.id
   route_key          = "GET /v1/notes"
   target             = "integrations/${aws_apigatewayv2_integration.get_notes_lambda_integration.id}"
   authorization_type = "JWT"
@@ -53,5 +53,5 @@ resource "aws_lambda_permission" "get_notes_lambda" {
   action        = "lambda:InvokeFunction"
   function_name = "${var.app_name}-get-notes"
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.notes_api.execution_arn}/*/*"
+  source_arn    = "${local.apigateway.execution_arn}/*/*"
 }

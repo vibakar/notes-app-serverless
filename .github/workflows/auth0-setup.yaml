@@ -3,42 +3,14 @@ name: Auth0 Setup
 on:
   workflow_dispatch: {}
 
+permissions:
+  id-token: write   # REQUIRED for OIDC authentication
+  contents: read    # needed so checkout can read repo code
+
 env:
   AWS_REGION: eu-west-2
 
 jobs:
-
-  bootstrap:
-    name: Bootstrap
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: infra/bootstrap
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ASSUME_ROLE }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.5.7
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Plan
-        run: terraform plan
-
-      - name: Terraform Apply (auto-approve)
-        run: terraform apply -auto-approve
-
   config-auth0:
     name: Config Auth0
     needs: [bootstrap]
@@ -65,9 +37,8 @@ jobs:
       - name: Fetch secrets from aws secrets manager
         uses: ./.github/actions/fetch-secrets
         with:
-          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ASSUME_ROLE }}
+          aws_region: ${{ env.AWS_REGION }}
           secret_id: notes-app-serverless/auth0/pipeline-config
 
       - name: Terraform Init
